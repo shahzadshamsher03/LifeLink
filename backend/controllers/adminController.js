@@ -68,6 +68,10 @@ export const getStats = asyncHandler(async (req, res) => {
     deletedBroadcastRequests,
     volunteersRes,
     broadcastDemandStats,
+    criticalRequestsCount,
+    highRequestsCount,
+    emergencyRequestsByPriority,
+    requestsByPriorityLevel,
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ role: 'donor' }),
@@ -105,6 +109,16 @@ export const getStats = asyncHandler(async (req, res) => {
     BloodRequest.aggregate([
       { $match: { requestType: 'broadcast', isDeleted: { $ne: true } } },
       { $group: { _id: '$bloodGroup', count: { $sum: 1 } } }
+    ]),
+    BloodRequest.countDocuments({ priorityLevel: 'Critical', isDeleted: { $ne: true } }),
+    BloodRequest.countDocuments({ priorityLevel: 'High', isDeleted: { $ne: true } }),
+    BloodRequest.aggregate([
+      { $match: { emergency: true, isDeleted: { $ne: true } } },
+      { $group: { _id: '$priorityLevel', count: { $sum: 1 } } }
+    ]),
+    BloodRequest.aggregate([
+      { $match: { isDeleted: { $ne: true } } },
+      { $group: { _id: '$priorityLevel', count: { $sum: 1 } } }
     ])
   ]);
 
@@ -114,6 +128,20 @@ export const getStats = asyncHandler(async (req, res) => {
   broadcastDemandStats.forEach(stat => {
     if (stat._id) {
       bloodGroupDemand[stat._id] = stat.count;
+    }
+  });
+
+  const emergencyPriorityDemand = { Low: 0, Medium: 0, High: 0, Critical: 0 };
+  emergencyRequestsByPriority.forEach(stat => {
+    if (stat._id) {
+      emergencyPriorityDemand[stat._id] = stat.count;
+    }
+  });
+
+  const priorityLevelChartData = { Low: 0, Medium: 0, High: 0, Critical: 0 };
+  requestsByPriorityLevel.forEach(stat => {
+    if (stat._id) {
+      priorityLevelChartData[stat._id] = stat.count;
     }
   });
 
@@ -132,6 +160,9 @@ export const getStats = asyncHandler(async (req, res) => {
         deletedBroadcastRequests,
         totalVolunteers,
         bloodGroupDemand,
+        criticalRequestsCount,
+        highRequestsCount,
+        emergencyPriorityDemand,
       },
       recentUsers: recentUsers.map(formatAdminUser),
       charts: {
@@ -144,6 +175,10 @@ export const getStats = asyncHandler(async (req, res) => {
           status: r._id,
           count: r.count,
         })),
+        requestsByPriorityLevel: Object.entries(priorityLevelChartData).map(([level, count]) => ({
+          priorityLevel: level,
+          count,
+        })),
       },
       recentRequests: recentRequests.map((r) => ({
         _id: r._id,
@@ -153,6 +188,8 @@ export const getStats = asyncHandler(async (req, res) => {
         createdAt: r.createdAt,
         requesterName: r.requesterId?.hospitalName || r.requesterId?.name,
         donorName: r.donorId?.name,
+        priorityScore: r.priorityScore,
+        priorityLevel: r.priorityLevel,
       })),
     },
   });

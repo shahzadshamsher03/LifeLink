@@ -10,6 +10,7 @@ import {
   Radio,
   ClipboardList,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   BarChart,
@@ -140,7 +141,28 @@ const AdminDashboard = () => {
         <StatCard title="Total Volunteers" value={stats.totalVolunteers ?? 0} icon={UserCheck} accent="sky" delay={0.25} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* AI PRIORITY SCORING HUB */}
+      <div className="space-y-4 p-6 rounded-3xl border border-white/60 bg-white/40 backdrop-blur-xl shadow-soft">
+        <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+          <Droplets className="w-5 h-5 text-rose-600 animate-pulse" />
+          AI Priority Analysis Metrics
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard title="Critical Requests" value={stats.criticalRequestsCount ?? 0} icon={AlertTriangle} accent="rose" delay={0.05} />
+          <StatCard title="High Priority Requests" value={stats.highRequestsCount ?? 0} icon={AlertTriangle} accent="amber" delay={0.1} />
+          <StatCard 
+            title="Emergency Priority (Critical/High)" 
+            value={(stats.emergencyPriorityDemand?.Critical ?? 0) + (stats.emergencyPriorityDemand?.High ?? 0)} 
+            subtitle={`Critical: ${stats.emergencyPriorityDemand?.Critical ?? 0} · High: ${stats.emergencyPriorityDemand?.High ?? 0}`}
+            icon={Building2} 
+            accent="violet" 
+            delay={0.15} 
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Chart 1: Donors by blood group */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -166,6 +188,7 @@ const AdminDashboard = () => {
           )}
         </motion.div>
 
+        {/* Chart 2: Users by role */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -199,6 +222,7 @@ const AdminDashboard = () => {
           )}
         </motion.div>
 
+        {/* Chart 3: Request status */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -231,6 +255,7 @@ const AdminDashboard = () => {
           )}
         </motion.div>
 
+        {/* Chart 4: Blood group demand */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -252,6 +277,50 @@ const AdminDashboard = () => {
                 />
                 <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
               </BarChart>
+            </ResponsiveContainer>
+          )}
+        </motion.div>
+
+        {/* Chart 5: Requests by priority level */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-2xl border border-white/60 bg-white/70 backdrop-blur-xl p-5 shadow-soft"
+        >
+          <h3 className="font-semibold text-slate-900 text-sm">Requests by priority level</h3>
+          <p className="text-xs text-slate-500 mt-0.5 mb-4">AI priority scoring distribution</p>
+          {!charts.requestsByPriorityLevel || charts.requestsByPriorityLevel.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-12">No request data yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={charts.requestsByPriorityLevel.map((r) => ({
+                    name: r.priorityLevel,
+                    value: r.count,
+                    level: r.priorityLevel,
+                  }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={72}
+                  label={false}
+                >
+                  {charts.requestsByPriorityLevel.map((entry) => {
+                    const colors = {
+                      Critical: '#ef4444',
+                      High: '#f97316',
+                      Medium: '#eab308',
+                      Low: '#22c55e',
+                    };
+                    return <Cell key={entry.priorityLevel} fill={colors[entry.priorityLevel] || '#64748b'} />;
+                  })}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
             </ResponsiveContainer>
           )}
         </motion.div>
@@ -358,6 +427,19 @@ const AdminDashboard = () => {
                         {r.bloodGroup}
                         {r.emergency && (
                           <span className="ml-2 text-amber-600 font-medium">Emergency</span>
+                        )}
+                        {r.priorityLevel && (
+                          <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                            r.priorityLevel === 'Critical'
+                              ? 'bg-red-50 border-red-100 text-red-600'
+                              : r.priorityLevel === 'High'
+                              ? 'bg-orange-50 border-orange-100 text-orange-600'
+                              : r.priorityLevel === 'Medium'
+                              ? 'bg-amber-50 border-amber-100 text-amber-600'
+                              : 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                          }`}>
+                            {r.priorityLevel}
+                          </span>
                         )}
                       </p>
                     </div>

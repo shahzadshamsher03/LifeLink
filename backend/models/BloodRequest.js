@@ -134,6 +134,17 @@ const bloodRequestSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    priorityScore: {
+      type: Number,
+      default: 0,
+    },
+
+    priorityLevel: {
+      type: String,
+      enum: ['Low', 'Medium', 'High', 'Critical'],
+      default: 'Low',
+    },
   },
   {
     timestamps: true,
@@ -145,6 +156,7 @@ bloodRequestSchema.index({ requesterId: 1, donorId: 1, status: 1 });
 bloodRequestSchema.index({ donorId: 1, status: 1 });
 bloodRequestSchema.index({ requesterId: 1, createdAt: -1 });
 bloodRequestSchema.index({ requesterId: 1, emergency: 1 });
+bloodRequestSchema.index({ priorityLevel: 1 });
 
 const BloodRequest = mongoose.model('BloodRequest', bloodRequestSchema);
 

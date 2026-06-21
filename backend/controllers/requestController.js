@@ -6,6 +6,7 @@ import { BLOOD_GROUPS } from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import AppError from '../utils/AppError.js';
 import { emitNewRequest, emitRequestResponse, emitAdminUpdate, emitBroadcastRequest, emitBroadcastResolved, emitHospitalDonorAdded, emitHospitalDonorUpdated, emitToUser } from '../sockets/socketManager.js';
+import { calculatePriority } from '../utils/priorityScorer.js';
 
 const requesterFields = 'name email role phoneNumber hospitalName city';
 const donorFields = 'name email bloodGroup city availability phoneNumber';
@@ -51,6 +52,8 @@ export const formatRequest = (request) => {
     resolvedAt: doc.resolvedAt,
     resolvedBy: doc.resolvedBy,
     isDeleted: doc.isDeleted ?? false,
+    priorityScore: doc.priorityScore ?? 0,
+    priorityLevel: doc.priorityLevel ?? 'Low',
   };
 };
 
@@ -108,6 +111,18 @@ export const createRequest = asyncHandler(async (req, res) => {
       emergencyLevel
     } = req.body;
     const emergency = isHospital ? true : (emergencyLevel === 'urgent' || emergencyLevel === 'high' || Boolean(emergencyBody));
+    const resolvedEmergencyLevel = emergencyLevel || (emergency ? 'urgent' : 'medium');
+    const resolvedUnitsRequired = parseInt(unitsRequired) || 1;
+
+    const priority = calculatePriority({
+      emergency,
+      bloodGroup: resolvedBloodGroup,
+      unitsRequired: resolvedUnitsRequired,
+      emergencyLevel: resolvedEmergencyLevel,
+      hospitalName: isHospital ? req.user.hospitalName : undefined,
+      hospitalInvolved: isHospital,
+      requesterRole: req.user.role,
+    });
 
     const bloodRequest = await BloodRequest.create({
       requesterId: req.user._id,
@@ -118,13 +133,15 @@ export const createRequest = asyncHandler(async (req, res) => {
       hospitalName: isHospital ? req.user.hospitalName : undefined,
       requestType: 'direct',
       patientName: patientName?.trim() || undefined,
-      unitsRequired: parseInt(unitsRequired) || 1,
+      unitsRequired: resolvedUnitsRequired,
       city: city?.trim() || req.user.city || undefined,
       location: location?.trim() || undefined,
       requiredBefore: requiredBefore || undefined,
       reason: reason || undefined,
       allowContact: allowContact !== false,
-      emergencyLevel: emergencyLevel || (emergency ? 'urgent' : 'medium'),
+      emergencyLevel: resolvedEmergencyLevel,
+      priorityScore: priority.score,
+      priorityLevel: priority.level,
     });
 
     const populated = await populateRequest(BloodRequest.findById(bloodRequest._id));
@@ -173,6 +190,18 @@ export const createRequest = asyncHandler(async (req, res) => {
 
     const isHospital = req.user.role === 'hospital';
     const emergency = isHospital ? true : Boolean(emergencyBody);
+    const resolvedEmergencyLevel = emergencyLevel || (emergency ? 'urgent' : 'medium');
+    const resolvedUnitsRequired = Number(unitsRequired) || 1;
+
+    const priority = calculatePriority({
+      emergency,
+      bloodGroup,
+      unitsRequired: resolvedUnitsRequired,
+      emergencyLevel: resolvedEmergencyLevel,
+      hospitalName: isHospital ? req.user.hospitalName : undefined,
+      hospitalInvolved: isHospital,
+      requesterRole: req.user.role,
+    });
 
     const bloodRequest = await BloodRequest.create({
       requesterId: req.user._id,
@@ -182,14 +211,16 @@ export const createRequest = asyncHandler(async (req, res) => {
       emergency,
       hospitalName: isHospital ? req.user.hospitalName : undefined,
       requestType: 'broadcast',
-      emergencyLevel: emergencyLevel || (emergency ? 'urgent' : 'medium'),
+      emergencyLevel: resolvedEmergencyLevel,
       status: 'active',
       patientName: patientName?.trim() || undefined,
-      unitsRequired: Number(unitsRequired) || 1,
+      unitsRequired: resolvedUnitsRequired,
       location: location?.trim() || undefined,
       requiredBefore: requiredBefore ? new Date(requiredBefore) : undefined,
       reason: reason || 'Custom Message',
       allowContact: allowContact !== false,
+      priorityScore: priority.score,
+      priorityLevel: priority.level,
     });
 
     const populated = await BloodRequest.findById(bloodRequest._id)

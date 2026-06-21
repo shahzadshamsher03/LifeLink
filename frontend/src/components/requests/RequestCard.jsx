@@ -137,13 +137,37 @@ const RequestCard = ({
                   {request.requestType === 'broadcast' ? 'Emergency Broadcast Response' : 'Direct Request'}
                 </span>
               </div>
-              <div>
+              <div className="flex flex-wrap gap-1.5 items-center justify-end">
                 {request.emergency && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-100 text-rose-800 text-[9px] font-extrabold uppercase border border-rose-200 animate-pulse">
                     <AlertTriangle className="w-2.5 h-2.5" />
                     Emergency
                   </span>
                 )}
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[9px] font-extrabold uppercase transition-all duration-300 ${
+                    request.priorityLevel === 'Critical'
+                      ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                      : request.priorityLevel === 'High'
+                      ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                      : request.priorityLevel === 'Medium'
+                      ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+                      : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span>
+                    {request.priorityLevel === 'Critical'
+                      ? '🔴'
+                      : request.priorityLevel === 'High'
+                      ? '🟠'
+                      : request.priorityLevel === 'Medium'
+                      ? '🟡'
+                      : '🟢'}
+                  </span>
+                  <span>
+                    {request.priorityLevel || 'Low'}
+                  </span>
+                </span>
               </div>
             </div>
           </div>

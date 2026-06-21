@@ -52,6 +52,20 @@ const EMERGENCY_COLORS = {
   urgent: 'bg-rose-50 text-rose-700 border-rose-200 border-l-4 border-l-rose-500 animate-pulse',
 };
 
+const PRIORITY_COLORS = {
+  Critical: 'bg-red-50 text-red-700 border-red-200',
+  High: 'bg-orange-50 text-orange-700 border-orange-200',
+  Medium: 'bg-amber-50 text-amber-700 border-amber-200',
+  Low: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+};
+
+const PRIORITY_DOTS = {
+  Critical: '🔴',
+  High: '🟠',
+  Medium: '🟡',
+  Low: '🟢',
+};
+
 const REASONS = [
   'Surgery',
   'Accident',
@@ -536,6 +550,15 @@ const BloodRequestsFeed = () => {
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-semibold">
                       <Hash className="w-3 h-3" />
                       {request.unitsRequired || 1} Unit(s)
+                    </span>
+
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                        PRIORITY_COLORS[request.priorityLevel || 'Low']
+                      }`}
+                    >
+                      <span>{PRIORITY_DOTS[request.priorityLevel || 'Low']}</span>
+                      <span>{request.priorityLevel || 'Low'}</span>
                     </span>
                   </div>
                 </div>
