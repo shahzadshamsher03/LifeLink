@@ -5,7 +5,7 @@ import Notification from '../models/Notification.js';
 import { BLOOD_GROUPS } from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import AppError from '../utils/AppError.js';
-import { emitNewRequest, emitRequestResponse, emitAdminUpdate, emitBroadcastRequest, emitBroadcastResolved, emitHospitalDonorAdded, emitHospitalDonorUpdated, emitToUser } from '../sockets/socketManager.js';
+import { emitNewRequest, emitRequestResponse, emitAdminUpdate, emitBroadcastRequest, emitBroadcastResolved, emitHospitalDonorAdded, emitHospitalDonorUpdated, emitToUser, emitNewEmergencyRequest } from '../sockets/socketManager.js';
 import { calculatePriority } from '../utils/priorityScorer.js';
 
 const requesterFields = 'name email role phoneNumber hospitalName city';
@@ -54,6 +54,7 @@ export const formatRequest = (request) => {
     isDeleted: doc.isDeleted ?? false,
     priorityScore: doc.priorityScore ?? 0,
     priorityLevel: doc.priorityLevel ?? 'Low',
+    locationCoords: doc.locationCoords ?? null,
   };
 };
 
@@ -108,7 +109,9 @@ export const createRequest = asyncHandler(async (req, res) => {
       reason,
       allowContact,
       city,
-      emergencyLevel
+      emergencyLevel,
+      latitude,
+      longitude,
     } = req.body;
     const emergency = isHospital ? true : (emergencyLevel === 'urgent' || emergencyLevel === 'high' || Boolean(emergencyBody));
     const resolvedEmergencyLevel = emergencyLevel || (emergency ? 'urgent' : 'medium');
@@ -142,10 +145,18 @@ export const createRequest = asyncHandler(async (req, res) => {
       emergencyLevel: resolvedEmergencyLevel,
       priorityScore: priority.score,
       priorityLevel: priority.level,
+      locationCoords: (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) ? {
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+      } : undefined,
     });
 
     const populated = await populateRequest(BloodRequest.findById(bloodRequest._id));
     const formatted = formatRequest(populated);
+
+    if (formatted.emergency) {
+      emitNewEmergencyRequest(formatted);
+    }
 
     emitNewRequest(donor._id, {
       requestId: formatted._id,
@@ -178,6 +189,8 @@ export const createRequest = asyncHandler(async (req, res) => {
       requiredBefore,
       reason,
       allowContact,
+      latitude,
+      longitude,
     } = req.body;
 
     if (!bloodGroup || !BLOOD_GROUPS.includes(bloodGroup)) {
@@ -221,12 +234,20 @@ export const createRequest = asyncHandler(async (req, res) => {
       allowContact: allowContact !== false,
       priorityScore: priority.score,
       priorityLevel: priority.level,
+      locationCoords: (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) ? {
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+      } : undefined,
     });
 
     const populated = await BloodRequest.findById(bloodRequest._id)
       .populate('requesterId', requesterFields);
 
     const formatted = formatRequest(populated);
+
+    if (formatted.emergency) {
+      emitNewEmergencyRequest(formatted);
+    }
 
     emitBroadcastRequest({
       requestId: formatted._id,

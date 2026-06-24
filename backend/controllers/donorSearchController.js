@@ -2,7 +2,7 @@ import User, { BLOOD_GROUPS } from '../models/User.js';
 import BloodRequest from '../models/BloodRequest.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
-const donorListSelect = 'name email phoneNumber bloodGroup city availability role';
+const donorListSelect = 'name email phoneNumber bloodGroup city availability role location';
 
 export const searchDonors = asyncHandler(async (req, res) => {
   const { bloodGroup, city, availability, search } = req.query;

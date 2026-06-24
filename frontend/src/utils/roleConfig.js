@@ -11,6 +11,7 @@ import {
   Droplets,
   Building2,
   Radio,
+  Map,
 } from 'lucide-react';
 
 export const roleLabels = {
@@ -36,6 +37,8 @@ export const sidebarMenus = {
   user: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { label: 'Broadcast Feed', icon: Radio, path: '/blood-requests' },
+    { label: 'Donor Map', icon: Map, path: '/donor-map' },
+    { label: 'Emergency Map', icon: AlertTriangle, path: '/emergency-map' },
     { label: 'Search Donors', icon: Search, path: '/search-donors' },
     { label: 'My Requests', icon: ClipboardList, path: '/my-requests' },
     { label: 'Profile', icon: User, path: '/profile' },
@@ -44,6 +47,7 @@ export const sidebarMenus = {
   donor: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { label: 'Broadcast Feed', icon: Radio, path: '/blood-requests' },
+    { label: 'Emergency Map', icon: AlertTriangle, path: '/emergency-map' },
     { label: 'Requests Received', icon: Inbox, path: '/requests-received' },
     { label: 'Donation History', icon: History, path: '/donation-history' },
     { label: 'Profile', icon: User, path: '/profile' },
@@ -52,20 +56,17 @@ export const sidebarMenus = {
   hospital: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { label: 'Broadcast Feed', icon: Radio, path: '/blood-requests' },
-
+    { label: 'Donor Map', icon: Map, path: '/donor-map' },
     {
-      label: 'Emergency Requests',
+      label: 'Emergency Map',
       icon: AlertTriangle,
-      path: '/emergency-requests',
+      path: '/emergency-map',
     },
-
-    // ✅ FIXED: correct feature page
     {
       label: 'Hospital Donors',
       icon: Database,
       path: '/hospital-donors',
     },
-
     { label: 'Search Donors', icon: Search, path: '/search-donors' },
     { label: 'Sent Requests', icon: ClipboardList, path: '/my-requests' },
     { label: 'Profile', icon: User, path: '/profile' },
@@ -74,6 +75,9 @@ export const sidebarMenus = {
   admin: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/admin-dashboard' },
     { label: 'Broadcast Feed', icon: Radio, path: '/blood-requests' },
+    { label: 'Donor Map', icon: Map, path: '/donor-map' },
+    { label: 'Emergency Map', icon: AlertTriangle, path: '/emergency-map' },
+    { label: 'Analytics Map', icon: Map, path: '/analytics-map' },
     { label: 'Manage Broadcasts', icon: ClipboardList, path: '/broadcasts' },
     { label: 'Users', icon: Users, path: '/users' },
     { label: 'Donors', icon: Droplets, path: '/donors' },

@@ -1,11 +1,11 @@
 import User from '../models/User.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import AppError from '../utils/AppError.js';
-import { emitAdminUpdate } from '../sockets/socketManager.js';
+import { emitAdminUpdate, emitDonorLocationUpdated, emitHospitalLocationUpdated } from '../sockets/socketManager.js';
 
 // PUT /api/profile
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, email, phoneNumber, city, address, bloodGroup, hospitalName } = req.body;
+  const { name, email, phoneNumber, city, address, bloodGroup, hospitalName, location } = req.body;
 
   if (email && email.toLowerCase() !== req.user.email.toLowerCase()) {
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
@@ -28,6 +28,17 @@ export const updateProfile = asyncHandler(async (req, res) => {
   if (city !== undefined) req.user.city = city;
   if (address !== undefined) req.user.address = address;
 
+  if (location !== undefined) {
+    if (location === null) {
+      req.user.location = undefined;
+    } else {
+      req.user.location = {
+        latitude: location.latitude !== undefined ? Number(location.latitude) : undefined,
+        longitude: location.longitude !== undefined ? Number(location.longitude) : undefined,
+      };
+    }
+  }
+
   if (req.user.role === 'donor') {
     if (bloodGroup !== undefined) req.user.bloodGroup = bloodGroup;
   }
@@ -45,6 +56,14 @@ export const updateProfile = asyncHandler(async (req, res) => {
     user: updatedUser.toPublicJSON(),
     createdAt: new Date().toISOString(),
   });
+
+  if (location !== undefined && updatedUser.location?.latitude && updatedUser.location?.longitude) {
+    if (updatedUser.role === 'donor') {
+      emitDonorLocationUpdated(updatedUser._id.toString(), updatedUser.location);
+    } else if (updatedUser.role === 'hospital') {
+      emitHospitalLocationUpdated(updatedUser._id.toString(), updatedUser.location);
+    }
+  }
 
   res.status(200).json({
     success: true,

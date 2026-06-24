@@ -18,6 +18,10 @@ import ResetPassword from '../pages/ResetPassword';
 const HospitalDonors = lazy(() => import('../pages/HospitalDonors'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
 
+const DonorMap = lazy(() => import('../pages/shared/DonorMap'));
+const EmergencyMap = lazy(() => import('../pages/shared/EmergencyMap'));
+const AnalyticsMap = lazy(() => import('../pages/admin/AnalyticsMap'));
+
 const SearchDonors = lazy(() => import('../pages/SearchDonors'));
 const Requests = lazy(() => import('../pages/Requests'));
 const DonationHistory = lazy(() => import('../pages/DonationHistory'));
@@ -112,6 +116,32 @@ const AppRoutes = () => (
               element={
                 <RoleRoute roles={['hospital']}>
                   <HospitalDonors />
+                </RoleRoute>
+              }
+            />
+
+            {/* MAP ROUTES */}
+            <Route
+              path="donor-map"
+              element={
+                <RoleRoute roles={['user', 'hospital', 'admin']}>
+                  <DonorMap />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="emergency-map"
+              element={
+                <RoleRoute roles={['user', 'donor', 'hospital', 'admin']}>
+                  <EmergencyMap />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="analytics-map"
+              element={
+                <RoleRoute roles={['admin']}>
+                  <AnalyticsMap />
                 </RoleRoute>
               }
             />

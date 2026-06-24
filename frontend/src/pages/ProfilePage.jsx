@@ -1,5 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+const RecenterMap = ({ center }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.setView(center, map.getZoom());
+    }
+  }, [center, map]);
+  return null;
+};
 import toast from 'react-hot-toast';
 import {
   User,
@@ -240,6 +263,28 @@ const ProfilePage = () => {
   const [bloodGroup, setBloodGroup] = useState(user?.bloodGroup || BLOOD_GROUPS[0]);
   const [hospitalName, setHospitalName] = useState(user?.hospitalName || '');
   const [availability, setAvailability] = useState(user?.availability !== false);
+  const [latitude, setLatitude] = useState(user?.location?.latitude || '');
+  const [longitude, setLongitude] = useState(user?.location?.longitude || '');
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+        toast.success('Location detected successfully.');
+      },
+      (error) => {
+        let msg = 'Failed to detect location.';
+        if (error.code === 1) msg = 'Location permission denied.';
+        else if (error.code === 2) msg = 'Position unavailable.';
+        toast.error(msg);
+      }
+    );
+  };
 
   // Verification modal states
   const [isDeactivating, setIsDeactivating] = useState(false);
@@ -269,6 +314,10 @@ const ProfilePage = () => {
         phoneNumber,
         city,
         address,
+        location: (latitude !== '' && longitude !== '') ? {
+          latitude: Number(latitude),
+          longitude: Number(longitude)
+        } : null
       };
 
       if (isDonor) {
@@ -595,6 +644,67 @@ const ProfilePage = () => {
                       </Select>
                     </div>
                   )}
+
+                  {/* Location Coordinates Section */}
+                  <div className="md:col-span-2 border-t border-slate-100 pt-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm">Location Coordinates</h4>
+                        <p className="text-slate-400 text-xs mt-0.5">Auto-detect or enter your latitude and longitude coordinates for map representation.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDetectLocation}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition-colors"
+                      >
+                        <MapPin className="w-3.5 h-3.5" />
+                        Detect My Location
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1">Latitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={latitude}
+                          onChange={(e) => setLatitude(e.target.value)}
+                          placeholder="e.g. 17.3850"
+                          className="w-full py-2.5 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-slate-800 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1">Longitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={longitude}
+                          onChange={(e) => setLongitude(e.target.value)}
+                          placeholder="e.g. 78.4867"
+                          className="w-full py-2.5 px-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-slate-800 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {latitude !== '' && longitude !== '' && !isNaN(Number(latitude)) && !isNaN(Number(longitude)) && (
+                      <div className="w-full h-48 rounded-xl overflow-hidden border border-slate-200 shadow-inner z-10 relative">
+                        <MapContainer
+                          center={[Number(latitude), Number(longitude)]}
+                          zoom={13}
+                          style={{ height: '100%', width: '100%' }}
+                          zoomControl={false}
+                        >
+                          <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          />
+                          <Marker position={[Number(latitude), Number(longitude)]} />
+                          <RecenterMap center={[Number(latitude), Number(longitude)]} />
+                        </MapContainer>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-3">

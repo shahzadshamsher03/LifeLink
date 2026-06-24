@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   Building2,
   Droplets,
@@ -14,6 +16,7 @@ import {
   MapPin,
   Activity,
   Info,
+  Compass
 } from 'lucide-react';
 import Button from '../ui/Button';
 
@@ -239,6 +242,28 @@ const RequestDetailsModal = ({
                         <span className="font-semibold text-slate-800 bg-white/50 p-2 rounded-lg border border-slate-100">{request.location}</span>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {request.locationCoords?.latitude && request.locationCoords?.longitude && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-2">
+                    <Compass className="w-4 h-4 text-rose-500" /> Geographic Map Location
+                  </h3>
+                  <div className="w-full h-40 rounded-xl overflow-hidden border border-slate-200 shadow-inner z-10 relative">
+                    <MapContainer
+                      center={[request.locationCoords.latitude, request.locationCoords.longitude]}
+                      zoom={13}
+                      style={{ height: '100%', width: '100%' }}
+                      zoomControl={false}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      />
+                      <Marker position={[request.locationCoords.latitude, request.locationCoords.longitude]} />
+                    </MapContainer>
                   </div>
                 </div>
               )}

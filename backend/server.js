@@ -13,6 +13,7 @@ import broadcastRoutes from './routes/broadcastRoutes.js';
 import hospitalDonorRoutes from './routes/hospitalDonorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import mapRoutes from './routes/mapRoutes.js';
 import { protect } from './middleware/authMiddleware.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { initSocket } from './sockets/socketManager.js';
@@ -52,6 +53,7 @@ app.use('/api/broadcasts', broadcastRoutes);
 app.use('/api/hospital-donors', hospitalDonorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/map', protect, mapRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

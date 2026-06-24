@@ -1,6 +1,19 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Droplets, MapPin, Phone, Mail, Calendar, Heart, Award, Zap, ShieldCheck } from 'lucide-react';
+import { X, Droplets, MapPin, Phone, Mail, Calendar, Heart, Award, Zap, ShieldCheck, Compass } from 'lucide-react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getDonorStats } from '../../utils/donorStats';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
 
 const DonorDetailsModal = ({ donor, open, onClose }) => {
   if (!donor) return null;
@@ -189,6 +202,28 @@ const DonorDetailsModal = ({ donor, open, onClose }) => {
                   </div>
                 )}
               </div>
+
+              {donor.location?.latitude && donor.location?.longitude && (
+                <div className="space-y-2 pt-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Compass className="w-4 h-4 text-rose-500 animate-pulse" /> Geographic Map Location
+                  </h4>
+                  <div className="w-full h-40 rounded-2xl overflow-hidden border border-slate-100 shadow-inner z-10 relative">
+                    <MapContainer
+                      center={[donor.location.latitude, donor.location.longitude]}
+                      zoom={13}
+                      style={{ height: '100%', width: '100%' }}
+                      zoomControl={false}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      />
+                      <Marker position={[donor.location.latitude, donor.location.longitude]} />
+                    </MapContainer>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

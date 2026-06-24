@@ -583,3 +583,24 @@ export const emitBroadcastDeleted = (payload) => {
   emitToRoom('role:hospital', 'broadcast_deleted', body);
   emitToRoom('role:admin', 'broadcast_deleted', body);
 };
+
+export const emitDonorLocationUpdated = (userId, location) => {
+  if (!io) return;
+  io.emit('donor_location_updated', { userId, location });
+};
+
+export const emitDonorAvailabilityUpdated = (userId, availability) => {
+  if (!io) return;
+  io.emit('donor_availability_updated', { userId, availability });
+};
+
+export const emitHospitalLocationUpdated = (userId, location) => {
+  if (!io) return;
+  io.emit('hospital_location_updated', { userId, location });
+};
+
+export const emitNewEmergencyRequest = (request) => {
+  if (!io) return;
+  io.emit('new_emergency_request', request);
+};
+

@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import AppError from '../utils/AppError.js';
+import { emitDonorAvailabilityUpdated } from '../sockets/socketManager.js';
 
 export const updateAvailability = asyncHandler(async (req, res) => {
   if (req.user.role !== 'donor') {
@@ -14,6 +15,8 @@ export const updateAvailability = asyncHandler(async (req, res) => {
 
   req.user.availability = availability;
   await req.user.save({ validateBeforeSave: true });
+
+  emitDonorAvailabilityUpdated(req.user._id.toString(), availability);
 
   res.status(200).json({
     success: true,
